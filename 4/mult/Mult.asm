@@ -8,3 +8,33 @@
 // The algorithm is based on repetitive addition.
 
 //// Replace this comment with your code.
+    @R2
+    M=0
+
+    @i
+    M=1
+
+(LOOP)
+    @i
+    D=M
+
+    @R1
+    D=D-M
+
+    @END
+    D;JGT
+
+    @R0
+    M=D
+
+    @R2
+    M=D+M
+
+    @i
+    M=M+1
+    @LOOP
+    0;JMP
+
+(END)
+    @END
+    0;JMP
