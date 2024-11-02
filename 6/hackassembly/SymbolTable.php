@@ -34,7 +34,7 @@ class SymbolTable
         ];
     }
 
-    public function addEntry(string $symbol, string $address): void
+    public function addEntry(string $symbol, int $address): void
     {
         $this->_entry[$symbol] = $address;
     }

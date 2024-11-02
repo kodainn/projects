@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 class Parser
 {
-    private object $_assemblyFile;
-    private string $_currentCommand;
+    private mixed $_assemblyFile;
+    private string|bool $_currentCommand;
 
-    public const A_COMMAND = 1;
-    public const C_COMMAND = 2;
-    public const L_COMMAND = 3;
+    public const NOT_VALID_COMMAND = 0;
+    public const A_COMMAND         = 1;
+    public const C_COMMAND         = 2;
+    public const L_COMMAND         = 3;
 
-    private const A_COMMAND_PATTERN = '/^@([0-9a-zA-Z_\.\$:]+)$/';
-    private const C_COMMAND_PATTERN = '/^(?:(A?M?D?)=)?([^;]+)(?:;(.+))?$/';
-    private const L_COMMAND_PATTERN = '/^\(([0-9a-zA-Z_\.\$:]*)\)$/';
     private const C_COMMAND_PATTERN_GROUP = '/^(?:(?<dest>[^=]*)=)?(?<comp>[^;]*)(?:;(?<jump>.*))?$/';
 
     public function __construct(string $assemblyFilePath)
@@ -23,9 +21,26 @@ class Parser
 
     public function advance(): bool
     {
-        $this->_currentCommand = (string) fgets($this->_assemblyFile);
+        if(is_resource($this->_assemblyFile) === false) {
+            return false;
+        }
 
-        return !empty($this->_currentCommand);
+        $this->_currentCommand = fgets($this->_assemblyFile);
+        if($this->_currentCommand !== false) {
+            $this->_currentCommand = str_replace(" ", "", $this->_currentCommand);
+            $this->_currentCommand = substr($this->_currentCommand, 0, strlen($this->_currentCommand) - 2);
+        }
+
+        if($this->_currentCommand === false) {
+            fclose($this->_assemblyFile);
+        }
+
+        return $this->_currentCommand !== false;
+    }
+
+    public function getCurrentCommand(): string
+    {
+        return $this->_currentCommand;
     }
 
     public function symbol(): string
@@ -53,11 +68,11 @@ class Parser
         }
 
         if (preg_match(self::C_COMMAND_PATTERN_GROUP, $this->_currentCommand, $matches)) {
-            return  (string) $matches['dest'];
+            return  $matches['dest'] ?? "";
         }
     }
 
-    public function comp()
+    public function comp(): string
     {
         if($this->commandType() !== self::C_COMMAND) {
             throw new Exception("Current command is no C_COMMAND");
@@ -65,11 +80,11 @@ class Parser
         }
 
         if (preg_match(self::C_COMMAND_PATTERN_GROUP, $this->_currentCommand, $matches)) {
-            return  (string) $matches['comp'];
+            return  $matches['comp'] ?? "";
         }
     }
 
-    public function jump()
+    public function jump(): string
     {
         if($this->commandType() !== self::C_COMMAND) {
             throw new Exception("Current command is no C_COMMAND");
@@ -77,25 +92,28 @@ class Parser
         }
 
         if (preg_match(self::C_COMMAND_PATTERN_GROUP, $this->_currentCommand, $matches)) {
-            return  (string) $matches['jump'];
+            return  $matches['jump'] ?? "";
         }
     }
 
     public function commandType(): int
     {
-        if(preg_match(self::A_COMMAND_PATTERN, $this->_currentCommand)) {
-            return self::A_COMMAND;
+        //コメントアウトは無効
+        if(preg_match('/\/\//', $this->_currentCommand)) {
+            return self::NOT_VALID_COMMAND;
+        }
+    
+        //空白行を無視
+        if(empty($this->_currentCommand)) {
+            return self::NOT_VALID_COMMAND;
         }
 
-        if(preg_match(self::C_COMMAND_PATTERN, $this->_currentCommand)) {
+        if($this->_currentCommand[0] === "@") {
+            return self::A_COMMAND;
+        }elseif($this->_currentCommand[0] === "(" && $this->_currentCommand[strlen($this->_currentCommand) - 1] === ")") {
+            return self::L_COMMAND;
+        } else {
             return self::C_COMMAND;
         }
-
-        if(preg_match(self::L_COMMAND_PATTERN, $this->_currentCommand)) {
-            return self::L_COMMAND;
-        }
-
-        throw new Exception("Syntax error");
-        return 0;
     }
 }
