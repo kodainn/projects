@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 class Code
 {
     private const DEST_MNEMONIC_TO_BINARY = [
