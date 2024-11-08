@@ -44,6 +44,24 @@ foreach($vmFilePaths as $path) {
         if($commandType === VmConstant::C_POP) {
             $codeWrite->writePushPop(VmConstant::C_POP, $arg1, $arg2);
         }
+        if($commandType === VmConstant::C_LABEL) {
+            $codeWrite->writeLabel($arg1);
+        }
+        if($commandType === VmConstant::C_GOTO) {
+            $codeWrite->writeGoto($arg1);
+        }
+        if($commandType === VmConstant::C_IF) {
+            $codeWrite->writeIf($arg1);
+        }
+        if($commandType === VmConstant::C_FUNCTION) {
+            $codeWrite->writeFunction($arg1, $arg2);
+        }
+        if($commandType === VmConstant::C_CALL) {
+            $codeWrite->writeCall($arg1, $arg2);
+        }
+        if($commandType === VmConstant::C_RETURN) {
+            $codeWrite->writeReturn();
+        }
     }
 }
 
